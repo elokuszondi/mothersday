@@ -1,11 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Heart } from 'lucide-react';
+import { Menu, X, Heart, User } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import AuthModal from './AuthModal';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<SupabaseUser | null>(null);
   const location = useLocation();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,6 +32,10 @@ const Header: React.FC = () => {
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <header 
@@ -39,68 +56,96 @@ const Header: React.FC = () => {
           }`}>Tribute to Women</span>
         </Link>
         
-        <nav className="hidden md:block">
-          <ul className="flex space-x-8">
-            <li>
-              <Link 
-                to="/" 
-                className={`text-sm font-medium transition-colors duration-300 hover:text-rose-500 ${
-                  location.pathname === '/' 
-                    ? 'text-rose-500' 
-                    : isScrolled ? 'text-gray-800' : 'text-gray-700'
-                }`}
-              >
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/khulu" 
-                className={`text-sm font-medium transition-colors duration-300 hover:text-rose-500 ${
-                  location.pathname === '/khulu' 
-                    ? 'text-rose-500' 
-                    : isScrolled ? 'text-gray-800' : 'text-gray-700'
-                }`}
-              >
-                Khulu
-              </Link>
-            </li>
-            <li className="relative group">
-              <button 
-                className={`text-sm font-medium transition-colors duration-300 hover:text-rose-500 flex items-center ${
-                  location.pathname.includes('/tribute/') 
-                    ? 'text-rose-500' 
-                    : isScrolled ? 'text-gray-800' : 'text-gray-700'
-                }`}
-              >
-                All Tributes
-                <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
+        <div className="flex items-center space-x-6">
+          <nav className="hidden md:block">
+            <ul className="flex space-x-8">
+              <li>
+                <Link 
+                  to="/" 
+                  className={`text-sm font-medium transition-colors duration-300 hover:text-rose-500 ${
+                    location.pathname === '/' 
+                      ? 'text-rose-500' 
+                      : isScrolled ? 'text-gray-800' : 'text-gray-700'
+                  }`}
+                >
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/khulu" 
+                  className={`text-sm font-medium transition-colors duration-300 hover:text-rose-500 ${
+                    location.pathname === '/khulu' 
+                      ? 'text-rose-500' 
+                      : isScrolled ? 'text-gray-800' : 'text-gray-700'
+                  }`}
+                >
+                  Khulu
+                </Link>
+              </li>
+              <li className="relative group">
+                <button 
+                  className={`text-sm font-medium transition-colors duration-300 hover:text-rose-500 flex items-center ${
+                    location.pathname.includes('/tribute/') 
+                      ? 'text-rose-500' 
+                      : isScrolled ? 'text-gray-800' : 'text-gray-700'
+                  }`}
+                >
+                  All Tributes
+                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+                <div className="absolute left-0 mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left">
+                  <div className="bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 p-2">
+                    <Link to="/tribute/aunt-kazi" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Kazi</Link>
+                    <Link to="/tribute/aunt-banana" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Banana</Link>
+                    <Link to="/tribute/aunt-sibo" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Sibo</Link>
+                    <Link to="/tribute/aunt-mpoki" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Mpoki</Link>
+                    <Link to="/tribute/aunt-tshidi" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Tshidi</Link>
+                    <Link to="/tribute/aunt-nderi" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Nderi</Link>
+                    <Link to="/tribute/sis-baba" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Sis Baba</Link>
+                    <Link to="/tribute/aunt-wiza" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Wiza</Link>
+                    <Link to="/tribute/gege" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Gege</Link>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </nav>
+
+          {currentUser ? (
+            <div className="relative group">
+              <button className="flex items-center space-x-2 text-gray-700 hover:text-rose-500">
+                <User size={20} />
+                <span className="text-sm font-medium hidden md:inline">Account</span>
               </button>
-              <div className="absolute left-0 mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-left">
+              <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
                 <div className="bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 p-2">
-                  <Link to="/tribute/aunt-kazi" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Kazi</Link>
-                  <Link to="/tribute/aunt-banana" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Banana</Link>
-                  <Link to="/tribute/aunt-sibo" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Sibo</Link>
-                  <Link to="/tribute/aunt-mpoki" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Mpoki</Link>
-                  <Link to="/tribute/aunt-tshidi" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Tshidi</Link>
-                  <Link to="/tribute/aunt-nderi" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Nderi</Link>
-                  <Link to="/tribute/sis-baba" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Sis Baba</Link>
-                  <Link to="/tribute/aunt-wiza" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Aunt Wiza</Link>
-                  <Link to="/tribute/gege" className="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md">Gege</Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-rose-50 hover:text-rose-500 rounded-md"
+                  >
+                    Sign Out
+                  </button>
                 </div>
               </div>
-            </li>
-          </ul>
-        </nav>
-        
-        <button 
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="md:hidden text-gray-700 hover:text-rose-500 transition-colors duration-300"
-        >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="text-sm font-medium text-rose-500 hover:text-rose-600 transition-colors duration-300"
+            >
+              Sign In
+            </button>
+          )}
+          
+          <button 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden text-gray-700 hover:text-rose-500 transition-colors duration-300"
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
       
       {/* Mobile menu */}
@@ -164,6 +209,11 @@ const Header: React.FC = () => {
           </div>
         </div>
       )}
+
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
     </header>
   );
 };

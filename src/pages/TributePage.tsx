@@ -1,16 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { tributeData } from '../data/tributeData';
 import PhotoGallery from '../components/PhotoGallery';
 import MessageSection from '../components/MessageSection';
 import LegacySection from '../components/LegacySection';
+import CommentSection from '../components/CommentSection';
+import MediaUpload from '../components/MediaUpload';
+import { supabase } from '../lib/supabase';
+import { User } from '@supabase/supabase-js';
 
 interface TributePageProps {
   personId: string;
 }
 
 const TributePage: React.FC<TributePageProps> = ({ personId }) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const person = tributeData.find(p => p.id === personId);
+  
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   
   if (!person) {
     return <div className="container-custom py-20 text-center">Tribute not found</div>;
@@ -73,6 +86,16 @@ const TributePage: React.FC<TributePageProps> = ({ personId }) => {
                       "{person.quotes[0].text}"
                     </div>
                   </div>
+
+                  {currentUser && (
+                    <div className="mt-6">
+                      <MediaUpload
+                        tributeId={person.id}
+                        currentUser={currentUser}
+                        onUploadComplete={() => {}}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -146,6 +169,11 @@ const TributePage: React.FC<TributePageProps> = ({ personId }) => {
       
       {/* Messages Section */}
       <MessageSection memories={person.memories} />
+
+      {/* Comments Section */}
+      <div className="container-custom">
+        <CommentSection tributeId={person.id} currentUser={currentUser} />
+      </div>
     </div>
   );
 };

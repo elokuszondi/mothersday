@@ -1,13 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Star } from 'lucide-react';
 import { tributeData } from '../data/tributeData';
 import PhotoGallery from '../components/PhotoGallery';
 import MessageSection from '../components/MessageSection';
 import LegacySection from '../components/LegacySection';
+import CommentSection from '../components/CommentSection';
+import MediaUpload from '../components/MediaUpload';
+import { supabase } from '../lib/supabase';
+import { User } from '@supabase/supabase-js';
 
 const KhuluPage: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const khulu = tributeData.find(person => person.id === 'khulu');
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   if (!khulu) {
     return <div className="container-custom py-20 text-center">Tribute not found</div>;
@@ -70,6 +83,16 @@ const KhuluPage: React.FC = () => {
                       <span>{khulu.relation}</span>
                       <Star className="text-gold-400" size={18} />
                     </div>
+
+                    {currentUser && (
+                      <div className="mt-6">
+                        <MediaUpload
+                          tributeId={khulu.id}
+                          currentUser={currentUser}
+                          onUploadComplete={() => {}}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -164,6 +187,11 @@ const KhuluPage: React.FC = () => {
       
       {/* Messages Section */}
       <MessageSection memories={khulu.memories} />
+
+      {/* Comments Section */}
+      <div className="container-custom">
+        <CommentSection tributeId={khulu.id} currentUser={currentUser} />
+      </div>
     </div>
   );
 };
