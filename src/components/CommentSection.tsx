@@ -21,6 +21,30 @@ const CommentSection: React.FC<CommentSectionProps> = ({ tributeId, currentUser 
 
   useEffect(() => {
     fetchComments();
+    
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel('comments')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'comments',
+          filter: `tribute_id=eq.${tributeId}`
+        }, 
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setComments(prev => [payload.new as Comment, ...prev]);
+          } else if (payload.eventType === 'DELETE') {
+            setComments(prev => prev.filter(comment => comment.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [tributeId]);
 
   const fetchComments = async () => {
@@ -57,16 +81,29 @@ const CommentSection: React.FC<CommentSectionProps> = ({ tributeId, currentUser 
       console.error('Error posting comment:', error);
     } else {
       setNewComment('');
-      fetchComments();
     }
     setLoading(false);
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (!currentUser) return;
+
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', commentId)
+      .eq('user_id', currentUser.id);
+
+    if (error) {
+      console.error('Error deleting comment:', error);
+    }
   };
 
   return (
     <div className="py-8">
       <h2 className="text-2xl font-serif mb-6">Comments</h2>
 
-      {currentUser && (
+      {currentUser ? (
         <form onSubmit={handleSubmit} className="mb-8">
           <textarea
             value={newComment}
@@ -83,6 +120,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ tributeId, currentUser 
             {loading ? 'Posting...' : 'Post Comment'}
           </button>
         </form>
+      ) : (
+        <p className="text-gray-600 mb-8">Please sign in to leave a comment.</p>
       )}
 
       <div className="space-y-4">
@@ -92,8 +131,18 @@ const CommentSection: React.FC<CommentSectionProps> = ({ tributeId, currentUser 
             className="bg-white p-4 rounded-lg shadow-sm border border-gray-100"
           >
             <p className="text-gray-700">{comment.content}</p>
-            <div className="mt-2 text-sm text-gray-500">
-              {new Date(comment.created_at).toLocaleDateString()}
+            <div className="mt-2 flex justify-between items-center">
+              <span className="text-sm text-gray-500">
+                {new Date(comment.created_at).toLocaleDateString()}
+              </span>
+              {currentUser?.id === comment.user_id && (
+                <button
+                  onClick={() => handleDelete(comment.id)}
+                  className="text-sm text-rose-500 hover:text-rose-600"
+                >
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         ))}

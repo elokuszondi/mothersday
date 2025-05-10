@@ -71,6 +71,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ tributeId, currentUser, onUpl
     }
   };
 
+  if (!currentUser) return null;
+
   return (
     <div className="p-4 bg-white rounded-lg shadow-sm border border-gray-100">
       <h3 className="text-lg font-medium mb-4">Share Photos or Videos</h3>
@@ -79,7 +81,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ tributeId, currentUser, onUpl
         type="file"
         accept="image/*,video/*"
         onChange={handleFileChange}
-        className="mb-4"
+        className="mb-4 w-full"
       />
 
       {error && (
@@ -89,7 +91,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ tributeId, currentUser, onUpl
       <button
         onClick={handleUpload}
         disabled={!file || loading}
-        className="btn btn-primary"
+        className="btn btn-primary w-full"
       >
         {loading ? 'Uploading...' : 'Upload'}
       </button>
